@@ -1,64 +1,60 @@
-import { useRef, useEffect } from 'react';
-import { useExtend, useTick } from '@pixi/react';
+import { useState, useEffect } from 'react';
+import { useExtend } from '@pixi/react';
 import '@pixi/layout';
 import { LayoutContainer } from '@pixi/layout/components';
-import * as pixiJs from 'pixi.js';
-import { Assets, AnimatedSprite } from 'pixi.js';
+import { Assets, Sprite } from 'pixi.js';
 
 import Application_ from './Component/Application_';
 
-const textureCollection = await Assets.load('/asset/sprite/fighter.json').then(
-  ({ textures }) => Object.values(textures)
+const assetAliasCollection = ['flowerTop', 'eggHead'];
+
+Assets.add(
+  assetAliasCollection.map((alias) => ({
+    alias,
+    src: `/asset/sprite/${alias}.png`
+  }))
 );
 
-const LayoutContainer_ = () => {
-  useExtend({ LayoutContainer, AnimatedSprite });
+Assets.backgroundLoad(assetAliasCollection);
 
-  const ref = useRef(undefined);
+const LayoutContainer_ = ({
+  assetAliasIndexActive,
+  assetAliasIndexActiveSet
+}) => {
+  useExtend({ LayoutContainer, Sprite });
+
+  const [texture, textureSet] = useState(undefined);
 
   useEffect(() => {
-    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
-
-    const refCurrentChild = /** @type {AnimatedSprite} */ (
-      refCurrent.getChildAt(0)
-    );
-
-    refCurrentChild.play();
-  }, []);
-
-  useTick(() => {
-    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
-
-    Object.assign(
-      refCurrent,
-      /** @type {pixiJs.ContainerOptions} */ ({
-        rotation: refCurrent.rotation + 0.01
-      })
-    );
-  });
+    Assets.load(assetAliasCollection[assetAliasIndexActive]).then(textureSet);
+  }, [assetAliasIndexActive]);
 
   return (
     <pixiLayoutContainer
-      ref={ref}
-      layout={{
-        borderWidth: 0,
-        borderColor: 0x000000
-      }}
+      layout={{}}
+      eventMode='static'
+      cursor='pointer'
+      onPointerTap={() =>
+        assetAliasIndexActiveSet((assetAliasIndexActive = 0) =>
+          !assetAliasIndexActive ? 1 : 0
+        )
+      }
     >
-      <pixiAnimatedSprite
-        textures={textureCollection}
-        layout={{}}
-        animationSpeed={0.5}
-      />
+      <pixiSprite texture={texture} layout={{}} />
     </pixiLayoutContainer>
   );
 };
 
 const Home = () => {
+  const [assetAliasIndexActive, assetAliasIndexActiveSet] = useState(0);
+
   return (
     <div className='Home'>
       <Application_>
-        <LayoutContainer_ />
+        <LayoutContainer_
+          assetAliasIndexActive={assetAliasIndexActive}
+          assetAliasIndexActiveSet={assetAliasIndexActiveSet}
+        />
       </Application_>
     </div>
   );
