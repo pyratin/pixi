@@ -44,6 +44,8 @@ const Application_ = ({
     <Application
       resizeTo={window}
       backgroundColor={backgroundColor || 0x1099bb}
+      useBackBuffer
+      antialias
     >
       <Application__>{children}</Application__>
     </Application>
