@@ -1,21 +1,17 @@
-import { useExtend } from '@pixi/react';
-import '@pixi/layout';
-import { useRef, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useExtend, useApplication } from '@pixi/react';
+import * as pixiLayout from '@pixi/layout';
 import { LayoutContainer } from '@pixi/layout/components';
+import * as pixiJs from 'pixi.js';
 import { Assets, AnimatedSprite } from 'pixi.js';
 
 import Application_ from './Component/Application_';
 
-const textureCollection = await Assets.load(
-  '/asset/sprite/0123456789.json'
-).then(({ textures, data: { frames } }) =>
-  Object.entries(textures).map(([key, texture]) => ({
-    texture,
-    time: frames[key].duration
-  }))
+const textureCollection = await Assets.load('/asset/sprite/mc.json').then(
+  ({ textures }) => Object.values(textures)
 );
 
-const LayoutContainer_ = ({ index }) => {
+const LayoutContainer__ = ({ dimension }) => {
   useExtend({ LayoutContainer, AnimatedSprite });
 
   const ref = useRef(undefined);
@@ -27,23 +23,91 @@ const LayoutContainer_ = ({ index }) => {
       refCurrent.getChildAt(0)
     );
 
-    refCurrentChild.play();
-  }, []);
+    Object.assign(
+      refCurrent,
+      /** @type {pixiJs.ContainerOptions} */ ({
+        layout: /** @type {pixiLayout.LayoutOptions} */ ({
+          ...(() => {
+            const { width, height } = dimension;
+
+            const { width: _width, height: _height } = refCurrent;
+
+            return {
+              left: Math.random() * width - _width / 2,
+              top: Math.random() * height - _height / 2
+            };
+          })()
+        }),
+        scale: 1 + Math.random() * 0.5,
+        rotation: Math.random() * (Math.PI * 2)
+      })
+    );
+
+    refCurrentChild.gotoAndPlay((Math.random() * textureCollection.length) | 0);
+  }, [dimension]);
+
+  return (
+    <pixiLayoutContainer ref={ref} layout={{ position: 'absolute' }}>
+      <pixiAnimatedSprite
+        textures={textureCollection}
+        layout={{}}
+        animationSpeed={0.5}
+      />
+    </pixiLayoutContainer>
+  );
+};
+
+const LayoutContainer_ = () => {
+  useExtend({ LayoutContainer });
+
+  const {
+    app: { renderer }
+  } = useApplication();
+
+  const ref = useRef(undefined);
+
+  const [dimension, dimensionSet] = useState({});
+
+  useEffect(() => {
+    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
+
+    const onRefCurrentLayoutHandle = () =>
+      dimensionSet((dimension) =>
+        !Object.keys(dimension).length
+          ? (() => {
+              const { width, height } = refCurrent.layout._computedLayout;
+
+              return { width, height };
+            })()
+          : dimension
+      );
+
+    const onRendererResizeHandle = () => dimensionSet({});
+
+    refCurrent.on('layout', onRefCurrentLayoutHandle);
+
+    renderer.on('resize', onRendererResizeHandle);
+
+    return () => {
+      refCurrent.off('layout', onRefCurrentLayoutHandle);
+
+      renderer.off('resize', onRendererResizeHandle);
+    };
+  }, [renderer]);
 
   return (
     <pixiLayoutContainer
       ref={ref}
       layout={{
-        borderWidth: 1,
+        position: 'relative',
+        flex: 1,
+        borderWidth: 0,
         borderColor: 0x000000
       }}
     >
-      <pixiAnimatedSprite
-        textures={textureCollection}
-        layout={{}}
-        scale={2}
-        animationSpeed={!index ? 0.5 : 1}
-      />
+      {Array.from({ length: 50 }).map((_, index) => (
+        <LayoutContainer__ key={index} dimension={dimension} />
+      ))}
     </pixiLayoutContainer>
   );
 };
@@ -52,9 +116,7 @@ const Home = () => {
   return (
     <div className='Home'>
       <Application_>
-        {Array.from({ length: 2 }).map((_, index) => (
-          <LayoutContainer_ key={index} index={index} />
-        ))}
+        <LayoutContainer_ />
       </Application_>
     </div>
   );

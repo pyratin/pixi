@@ -19,7 +19,7 @@ const Application__ = ({ children }) => {
       layout: /** @type {pixiLayout.LayoutOptions} */ ({
         ...dimensionGet(),
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'stretch'
       })
     });
 
