@@ -6,28 +6,42 @@ import { Assets, Sprite } from 'pixi.js';
 
 import Application_ from './Component/Application_';
 
-const assetAliasCollection = ['flowerTop', 'eggHead'];
+/** @type {[string, string[]][]} */
+const bundleDefinitionCollection = [
+  ['start-screen', ['flowerTop']],
+  ['game-screen', ['eggHead']]
+];
 
-Assets.add(
-  assetAliasCollection.map((alias) => ({
-    alias,
-    src: `/asset/sprite/${alias}.png`
-  }))
-);
+Assets.init({
+  manifest: {
+    bundles: bundleDefinitionCollection.map(([name, assetAliasCollection]) => ({
+      name,
+      assets: assetAliasCollection.map((alias) => ({
+        alias,
+        src: `/asset/sprite/${alias}.png`
+      }))
+    }))
+  }
+});
 
-Assets.backgroundLoad(assetAliasCollection);
+Assets.backgroundLoadBundle(bundleDefinitionCollection.map(([name]) => name));
 
 const LayoutContainer_ = ({
-  assetAliasIndexActive,
-  assetAliasIndexActiveSet
+  bundleDefinitionIndexActive,
+  bundleDefinitionIndexActiveSet
 }) => {
   useExtend({ LayoutContainer, Sprite });
 
   const [texture, textureSet] = useState(undefined);
 
   useEffect(() => {
-    Assets.load(assetAliasCollection[assetAliasIndexActive]).then(textureSet);
-  }, [assetAliasIndexActive]);
+    const [name, [alias]] =
+      bundleDefinitionCollection[bundleDefinitionIndexActive];
+
+    Assets.loadBundle(name).then((bundleObject) =>
+      textureSet(bundleObject[alias])
+    );
+  }, [bundleDefinitionIndexActive]);
 
   return (
     <pixiLayoutContainer
@@ -35,8 +49,8 @@ const LayoutContainer_ = ({
       eventMode='static'
       cursor='pointer'
       onPointerTap={() =>
-        assetAliasIndexActiveSet((assetAliasIndexActive = 0) =>
-          !assetAliasIndexActive ? 1 : 0
+        bundleDefinitionIndexActiveSet((bundleDefinitionIndexActive = 0) =>
+          !bundleDefinitionIndexActive ? 1 : 0
         )
       }
     >
@@ -46,14 +60,15 @@ const LayoutContainer_ = ({
 };
 
 const Home = () => {
-  const [assetAliasIndexActive, assetAliasIndexActiveSet] = useState(0);
+  const [bundleDefinitionIndexActive, bundleDefinitionIndexActiveSet] =
+    useState(0);
 
   return (
     <div className='Home'>
       <Application_>
         <LayoutContainer_
-          assetAliasIndexActive={assetAliasIndexActive}
-          assetAliasIndexActiveSet={assetAliasIndexActiveSet}
+          bundleDefinitionIndexActive={bundleDefinitionIndexActive}
+          bundleDefinitionIndexActiveSet={bundleDefinitionIndexActiveSet}
         />
       </Application_>
     </div>
