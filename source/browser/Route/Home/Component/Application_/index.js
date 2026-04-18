@@ -19,7 +19,7 @@ const Application__ = ({ children }) => {
       layout: /** @type {pixiLayout.LayoutOptions} */ ({
         ...dimensionGet(),
         justifyContent: 'center',
-        alignItems: 'stretch'
+        alignItems: 'center'
       })
     });
 
@@ -36,7 +36,10 @@ const Application__ = ({ children }) => {
   return children;
 };
 
-const Application_ = ({ backgroundColor = undefined, children }) => {
+const Application_ = ({
+  backgroundColor = undefined,
+  children = undefined
+}) => {
   return (
     <Application
       resizeTo={window}
