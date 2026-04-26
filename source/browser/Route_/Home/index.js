@@ -4,6 +4,12 @@ import * as pixiLayout from '@pixi/layout';
 import { LayoutContainer } from '@pixi/layout/components';
 import * as pixiJs from 'pixi.js';
 import { Assets, AnimatedSprite, Graphics } from 'pixi.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import gsapPixiPlugin from 'gsap/PixiPlugin';
+
+gsap.registerPlugin(useGSAP, gsapPixiPlugin);
+gsapPixiPlugin.registerPIXI(pixiJs);
 
 import Application_ from './Component/Application_';
 import style from './index.module.scss';
@@ -127,6 +133,22 @@ const LayoutContainer__ = ({ index }) => {
       })
     );
   }, [active]);
+
+  useGSAP(
+    () => {
+      const refCurrent = /** @type {LayoutContainer} */ (ref.current);
+
+      !active
+        ? gsap.to(refCurrent, {
+            pixi: { scale: 1.1, angle: 10 * (!index ? -1 : 1) },
+            duration: 1,
+            repeat: -1,
+            yoyo: true
+          })
+        : gsap.to(refCurrent, { pixi: { scale: 1, angle: 0 }, duration: 0.25 });
+    },
+    { dependencies: [index, active], revertOnUpdate: true }
+  );
 
   return (
     <pixiLayoutContainer
