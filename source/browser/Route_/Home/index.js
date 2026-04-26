@@ -140,12 +140,17 @@ const LayoutContainer__ = ({ index }) => {
 
       !active
         ? gsap.to(refCurrent, {
-            pixi: { scale: 1.1, angle: 10 * (!index ? -1 : 1) },
+            pixi: { angle: 10 * (!index ? -1 : 1) },
             duration: 1,
             repeat: -1,
-            yoyo: true
+            yoyo: true,
+            ease: 'power1.out'
           })
-        : gsap.to(refCurrent, { pixi: { scale: 1, angle: 0 }, duration: 0.25 });
+        : gsap.to(refCurrent, {
+            pixi: { scale: 1, angle: 0 },
+            duration: 0.25,
+            ease: 'bounce.inOut'
+          });
     },
     { dependencies: [index, active], revertOnUpdate: true }
   );
@@ -162,6 +167,12 @@ const LayoutContainer__ = ({ index }) => {
       }}
       eventMode='static'
       cursor='pointer'
+      onPointerEnter={(event = {}) => {
+        !active && gsap.to(event.target, { pixi: { scale: 1.1 } });
+      }}
+      onPointerLeave={(event = {}) => {
+        !active && gsap.to(event.target, { pixi: { scale: 1 } });
+      }}
       onPointerTap={() => activeSet((active) => (!active ? true : false))}
     >
       <pixiGraphics
