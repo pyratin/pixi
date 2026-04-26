@@ -9,6 +9,7 @@ import gsap from 'gsap';
 import gsapPixiPlugin from 'gsap/PixiPlugin';
 
 gsap.registerPlugin(useGSAP, gsapPixiPlugin);
+
 gsapPixiPlugin.registerPIXI(pixiJs);
 
 import Application_ from './Component/Application_';
@@ -28,59 +29,9 @@ const LayoutContainer__ = ({ index }) => {
 
   const ref = useRef(undefined);
 
-  const refLayoutInitialized = useRef(false);
+  const [activeFlag, activeFlagSet] = useState(false);
 
-  const [active, activeSet] = useState(false);
-
-  useEffect(() => {
-    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
-
-    const onRefCurrentLayoutHandle = () =>
-      !refLayoutInitialized.current &&
-      (() => {
-        Object.assign(
-          refCurrent,
-          /** @type {pixiJs.ContainerOptions} */ ({
-            layout: /** @type {pixiLayout.LayoutOptions} */ ({
-              ...(() => {
-                const {
-                  layout: { _computedLayout: { left, width } = {} } = {}
-                } = refCurrent;
-
-                return {
-                  left: left + (width / 2) * (!index ? -1 : 1)
-                };
-              })()
-            })
-          })
-        );
-
-        Object.assign(refLayoutInitialized, { current: true });
-      })();
-
-    refCurrent.on('layout', onRefCurrentLayoutHandle);
-
-    return () => {
-      refCurrent.off('layout', onRefCurrentLayoutHandle);
-    };
-  }, [index]);
-
-  useEffect(() => {
-    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
-
-    const refCurrentAnimatedSprite = /** @type {AnimatedSprite} */ (
-      refCurrent.getChildByLabel('animatedSprite')
-    );
-
-    Object.assign(
-      refCurrentAnimatedSprite,
-      /** @type {pixiJs.AnimatedSpriteOptions} */ ({
-        tint: Math.random() * 0xffffff
-      })
-    );
-
-    refCurrentAnimatedSprite.play();
-  }, []);
+  const [hoverFlag, hoverFlagSet] = useState(false);
 
   useEffect(() => {
     const refCurrent = /** @type {LayoutContainer} */ (ref.current);
@@ -89,29 +40,16 @@ const LayoutContainer__ = ({ index }) => {
       refCurrent.getChildByLabel('graphics')
     );
 
-    const randomCollection = [Math.random(), Math.random()];
-
     const onRefCurrentLayoutHandle = () => {
+      const {
+        layout: { _computedLayout: { width = 0, height = 0 } = {} } = {}
+      } = refCurrent;
+
       refCurrentGraphics
         .clear()
-        .roundRect(
-          ...(() => {
-            const {
-              layout: {
-                _computedLayout: {
-                  left = 0,
-                  top = 0,
-                  width = 0,
-                  height = 0
-                } = {}
-              } = {}
-            } = refCurrent;
-
-            return /** @type {const} */ ([left, top, width, height, 20]);
-          })()
-        )
-        .fill({ color: randomCollection[0] * 0xffffff })
-        .stroke({ alignment: 1, width: 10, color: randomCollection[1] });
+        .roundRect(0, 0, width, height)
+        .fill({ color: 0xffffff, alpha: 0.25 })
+        .stroke({ alignment: 1, width: 5, color: 0x000000, alpha: 0.25 });
     };
 
     refCurrent.on('layout', onRefCurrentLayoutHandle);
@@ -119,61 +57,68 @@ const LayoutContainer__ = ({ index }) => {
     return () => {
       refCurrent.off('layout', onRefCurrentLayoutHandle);
     };
-  }, []);
-
-  useEffect(() => {
-    const refCurrent = /** @type {LayoutContainer} */ (ref.current);
-
-    Object.assign(
-      refCurrent,
-      /** @type {pixiJs.ContainerOptions} */ ({
-        layout: /** @type {pixiLayout.LayoutOptions} */ ({
-          marginBottom: active ? 100 : 0
-        })
-      })
-    );
-  }, [active]);
+  }, [index]);
 
   useGSAP(
     () => {
       const refCurrent = /** @type {LayoutContainer} */ (ref.current);
 
-      !active
-        ? gsap.to(refCurrent, {
-            pixi: { angle: 10 * (!index ? -1 : 1) },
-            duration: 1,
-            repeat: -1,
-            yoyo: true,
-            ease: 'power1.out'
-          })
-        : gsap.to(refCurrent, {
-            pixi: { scale: 1, angle: 0 },
-            duration: 0.25,
-            ease: 'bounce.inOut'
-          });
+      !activeFlag
+        ? gsap.fromTo(
+            refCurrent,
+            { pixi: { angle: -1 * Math.random() - 1 } },
+            {
+              pixi: { angle: 1 * Math.random() + 1 },
+              duration: 1,
+              repeat: -1,
+              yoyo: true,
+              ease: 'power1.in'
+            }
+          )
+        : gsap.to(refCurrent, { pixi: { angle: 0 }, duration: 1 });
     },
-    { dependencies: [index, active], revertOnUpdate: true }
+    {
+      dependencies: [activeFlag],
+      revertOnUpdate: true
+    }
+  );
+
+  useGSAP(
+    () => {
+      const refCurrent = /** @type {LayoutContainer} */ (ref.current);
+
+      gsap.to(refCurrent, {
+        pixi: { y: !activeFlag ? 0 : -50 },
+        duration: 0.5,
+        ease: 'elastic'
+      });
+    },
+    { dependencies: [activeFlag] }
+  );
+
+  useGSAP(
+    () => {
+      const refCurrent = /** @type {LayoutContainer} */ (ref.current);
+
+      gsap.to(refCurrent, {
+        pixi: { scale: hoverFlag && !activeFlag ? 1.05 : 1 }
+      });
+    },
+    { dependencies: [activeFlag, hoverFlag] }
   );
 
   return (
     <pixiLayoutContainer
       ref={ref}
       layout={{
-        position: 'absolute',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 0,
-        borderColor: 0xff0000
+        borderWidth: 1,
+        borderColor: 0x000000
       }}
       eventMode='static'
       cursor='pointer'
-      onPointerEnter={(event = {}) => {
-        !active && gsap.to(event.target, { pixi: { scale: 1.1 } });
-      }}
-      onPointerLeave={(event = {}) => {
-        !active && gsap.to(event.target, { pixi: { scale: 1 } });
-      }}
-      onPointerTap={() => activeSet((active) => (!active ? true : false))}
+      onPointerEnter={() => hoverFlagSet((hoverFlag) => !hoverFlag)}
+      onPointerLeave={() => hoverFlagSet((hoverFlag) => !hoverFlag)}
+      onPointerTap={() => activeFlagSet((activeFlag) => !activeFlag)}
     >
       <pixiGraphics
         label='graphics'
@@ -182,11 +127,9 @@ const LayoutContainer__ = ({ index }) => {
       />
 
       <pixiAnimatedSprite
-        label='animatedSprite'
         textures={textureCollection}
-        layout={{ margin: 40 }}
+        layout={{ margin: 20 }}
         scale={2}
-        animationSpeed={!index ? 0.5 : 1}
       />
     </pixiLayoutContainer>
   );
@@ -198,11 +141,10 @@ const LayoutContainer_ = () => {
   return (
     <pixiLayoutContainer
       layout={{
-        position: 'relative',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 0,
-        borderColor: 0x000000
+        borderWidth: 1,
+        borderColor: 0xff0000
       }}
     >
       {Array.from({ length: 2 }).map((_, index) => (
