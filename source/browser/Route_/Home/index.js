@@ -66,6 +66,13 @@ const LayoutContainer__ = ({ index }) => {
       refCurrent.getChildByLabel('animatedSprite')
     );
 
+    Object.assign(
+      refCurrentAnimatedSprite,
+      /** @type {pixiJs.AnimatedSpriteOptions} */ ({
+        tint: Math.random() * 0xffffff
+      })
+    );
+
     refCurrentAnimatedSprite.play();
   }, []);
 
@@ -75,6 +82,8 @@ const LayoutContainer__ = ({ index }) => {
     const refCurrentGraphics = /** @type {Graphics} */ (
       refCurrent.getChildByLabel('graphics')
     );
+
+    const randomCollection = [Math.random(), Math.random()];
 
     const onRefCurrentLayoutHandle = () => {
       refCurrentGraphics
@@ -95,7 +104,8 @@ const LayoutContainer__ = ({ index }) => {
             return /** @type {const} */ ([left, top, width, height, 20]);
           })()
         )
-        .stroke({ alignment: 1, width: 10, color: 0x000000, alpha: 0.25 });
+        .fill({ color: randomCollection[0] * 0xffffff })
+        .stroke({ alignment: 1, width: 10, color: randomCollection[1] });
     };
 
     refCurrent.on('layout', onRefCurrentLayoutHandle);
@@ -132,18 +142,18 @@ const LayoutContainer__ = ({ index }) => {
       cursor='pointer'
       onPointerTap={() => activeSet((active) => (!active ? true : false))}
     >
+      <pixiGraphics
+        label='graphics'
+        draw={() => {}}
+        layout={{ position: 'absolute' }}
+      />
+
       <pixiAnimatedSprite
         label='animatedSprite'
         textures={textureCollection}
         layout={{ margin: 40 }}
         scale={2}
         animationSpeed={!index ? 0.5 : 1}
-      />
-
-      <pixiGraphics
-        label='graphics'
-        draw={() => {}}
-        layout={{ position: 'absolute' }}
       />
     </pixiLayoutContainer>
   );
